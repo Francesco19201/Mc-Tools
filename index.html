@@ -1,0 +1,1257 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="description" content="Unisci resource pack di Minecraft Java & Bedrock Edition direttamente nel browser. Nessun server, nessun dato inviato." />
+  <title>MC Resource Pack Merger</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Orbitron:wght@700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+    body { min-height: 100vh; font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
+
+    /* ── Tab Bar ── */
+    #tabbar {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: stretch;
+      border-bottom: 1px solid;
+      transition: background .4s, border-color .4s;
+    }
+    .mc-tab {
+      flex: 1; display: flex; align-items: center; justify-content: center; gap: 10px;
+      padding: 14px 8px; border: none; background: none;
+      font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 700;
+      letter-spacing: .5px; cursor: pointer; transition: all .25s;
+      min-height: 56px; touch-action: manipulation;
+      border-bottom: 2px solid transparent;
+    }
+    .mc-tab-emoji { font-size: 18px; line-height: 1; }
+    .mc-tab-label { font-size: 11px; }
+    .mc-tab-version { font-size: 9px; opacity: .6; display: none; }
+    @media (min-width: 480px) { .mc-tab-version { display: block; } }
+
+    /* ── Hero ── */
+    #hero {
+      padding: 28px 20px 20px; text-align: center;
+      position: relative; overflow: hidden;
+      border-bottom: 1px solid;
+      transition: border-color .4s, background .4s;
+    }
+    #hero-glow { position: absolute; inset: 0; pointer-events: none; transition: background .4s; }
+    #hero-title {
+      position: relative;
+      font-size: clamp(13px, 4.5vw, 24px); font-weight: 900;
+      letter-spacing: 1px; line-height: 1.3;
+      transition: color .4s, text-shadow .4s, font-family .4s;
+    }
+    #hero-sub { position: relative; font-size: 11px; margin-top: 8px; opacity: .5; letter-spacing: .5px; }
+    #version-pill {
+      position: relative; display: inline-block; margin-top: 12px;
+      font-size: 10px; padding: 5px 14px; border-radius: 20px;
+      border: 1px solid; transition: all .4s; letter-spacing: .5px;
+    }
+
+    /* ── Body ── */
+    #app-body { padding: 14px 14px 100px; max-width: 720px; margin: 0 auto; }
+
+    /* ── Card ── */
+    .card {
+      border-radius: 10px; padding: 18px;
+      margin-bottom: 14px; border: 1px solid;
+      transition: background .4s, border-color .4s;
+    }
+    .card-title {
+      font-size: 10px; font-weight: 700;
+      letter-spacing: 1.5px; text-transform: uppercase;
+      margin-bottom: 16px;
+      display: flex; align-items: center; gap: 8px; opacity: .7;
+    }
+
+    /* ── Drop Zone ── */
+    #drop-zone {
+      border: 2px dashed; border-radius: 10px;
+      padding: 32px 20px; text-align: center;
+      cursor: pointer; transition: all .2s;
+      user-select: none; -webkit-user-select: none; touch-action: manipulation;
+    }
+    #drop-icon { font-size: 44px; display: block; margin-bottom: 12px; transition: transform .2s; }
+    #drop-zone.over #drop-icon { transform: scale(1.15); }
+    #drop-title { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+    #drop-sub { font-size: 11px; opacity: .45; }
+    #drop-types { font-size: 11px; opacity: .35; margin-top: 3px; }
+    #file-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      margin-top: 16px; padding: 11px 22px; border-radius: 7px;
+      font-size: 12px; font-weight: 600; border: 1px solid;
+      cursor: pointer; transition: all .2s;
+      touch-action: manipulation; min-height: 44px;
+    }
+
+    /* ── Info box ── */
+    #info-box {
+      border-radius: 7px; padding: 11px 14px;
+      font-size: 11px; line-height: 1.9; margin-top: 12px;
+      border-left: 3px solid;
+      border-top: none; border-right: none; border-bottom: none;
+      transition: all .4s; display: none;
+    }
+    #info-box.visible { display: block; }
+    #info-box code { font-family: monospace; font-size: 10px; padding: 1px 5px; border-radius: 3px; }
+
+    /* ── Pack List ── */
+    #pack-list { display: flex; flex-direction: column; gap: 7px; margin-top: 14px; }
+
+    /* ── Pack Row (outer wrapper) ── */
+    .pack-wrap { border-radius: 8px; overflow: hidden; border: 1px solid; transition: border-color .2s; }
+    .pack-wrap.is-base { border-width: 2px; }
+
+    .pack-row {
+      display: grid;
+      grid-template-columns: 44px 30px 1fr auto auto auto;
+      align-items: center; gap: 8px;
+      padding: 10px 12px;
+      transition: background .2s;
+      cursor: default;
+    }
+
+    /* ── Pack Thumbnail ── */
+    .pack-thumb {
+      width: 44px; height: 44px; border-radius: 5px;
+      overflow: hidden; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; border: 1px solid rgba(255,255,255,.08);
+      background: rgba(0,0,0,.3);
+    }
+    .pack-thumb img { width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; }
+
+    .pack-num { font-size: 9px; opacity: .35; font-weight: 700; text-align: center; display: none; }
+    .prio-col { display: flex; flex-direction: column; gap: 3px; }
+    .prio-btn {
+      width: 28px; height: 22px; border-radius: 4px;
+      border: 1px solid; background: none; font-size: 9px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all .12s; touch-action: manipulation;
+    }
+    .prio-btn:disabled { opacity: .2; cursor: not-allowed; }
+    .pack-info { min-width: 0; }
+    .pack-name { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pack-meta-row { display: flex; align-items: center; gap: 6px; margin-top: 2px; flex-wrap: wrap; }
+    .pack-size { font-size: 10px; opacity: .4; }
+    .base-badge {
+      font-size: 9px; font-weight: 700; padding: 2px 7px;
+      border-radius: 10px; border: 1px solid;
+      letter-spacing: .5px; white-space: nowrap; display: inline-block;
+    }
+
+    /* ── Preview toggle btn ── */
+    .preview-toggle {
+      background: none; border: 1px solid; border-radius: 5px;
+      font-size: 10px; font-weight: 600; padding: 4px 9px;
+      cursor: pointer; transition: all .15s; white-space: nowrap;
+      touch-action: manipulation; height: 28px;
+      display: inline-flex; align-items: center; gap: 4px;
+    }
+
+    .base-label {
+      display: flex; align-items: center; gap: 5px;
+      font-size: 10px; font-weight: 600; cursor: pointer;
+      white-space: nowrap; touch-action: manipulation;
+      padding: 4px 2px; -webkit-tap-highlight-color: transparent;
+    }
+    .pack-radio {
+      appearance: none; -webkit-appearance: none;
+      width: 18px; height: 18px; border: 2px solid;
+      border-radius: 50%; flex-shrink: 0;
+      position: relative; cursor: pointer; transition: all .15s;
+    }
+    .pack-radio:checked::after {
+      content: ''; position: absolute; inset: 3px;
+      border-radius: 50%; background: var(--accent); box-shadow: 0 0 6px var(--accent);
+    }
+    .rm-btn {
+      width: 30px; height: 30px; border-radius: 5px;
+      border: 1px solid rgba(200,60,60,.25);
+      background: none; color: rgba(200,60,60,.45);
+      font-size: 13px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all .12s; flex-shrink: 0; touch-action: manipulation;
+    }
+    .rm-btn:hover, .rm-btn:active { border-color: #cc4455; color: #cc4455; background: rgba(200,60,60,.1); }
+
+    /* ── Preview Panel ── */
+    .preview-panel {
+      display: none;
+      padding: 14px 14px 16px;
+      border-top: 1px solid rgba(255,255,255,.06);
+      animation: slideDown .18s ease;
+    }
+    .preview-panel.open { display: flex; gap: 14px; align-items: flex-start; }
+    @keyframes slideDown { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+
+    .preview-img-box {
+      width: 80px; height: 80px; flex-shrink: 0;
+      border-radius: 8px; overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 36px; border: 1px solid rgba(255,255,255,.1);
+      background: rgba(0,0,0,.3);
+    }
+    .preview-img-box img { width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; }
+    .preview-img-box.no-img { font-size: 32px; opacity: .4; }
+
+    .preview-text { flex: 1; min-width: 0; }
+    .preview-desc {
+      font-size: 12px; line-height: 1.7; word-break: break-word;
+      margin-bottom: 8px;
+    }
+    .preview-desc.empty { opacity: .35; font-style: italic; }
+    .preview-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+    .preview-tag {
+      font-size: 10px; padding: 2px 8px; border-radius: 12px;
+      border: 1px solid; opacity: .6;
+    }
+    .preview-loading { font-size: 11px; opacity: .4; font-style: italic; padding: 6px 0; }
+
+    .mc-chip {
+      font-size: 10px; font-weight: 700; padding: 3px 9px;
+      border-radius: 10px; border: 1px solid; transition: all .4s;
+    }
+    #empty-state { text-align: center; padding: 36px 20px; font-size: 12px; opacity: .35; line-height: 2.4; display: none; }
+    #empty-state.visible { display: block; }
+
+    /* ── Controls ── */
+    #controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .mc-btn {
+      height: 46px; padding: 0 20px; border-radius: 7px; border: 1px solid;
+      font-size: 12px; font-weight: 700; cursor: pointer; letter-spacing: .5px;
+      display: inline-flex; align-items: center; gap: 7px;
+      transition: all .15s; touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent; white-space: nowrap;
+    }
+    .mc-btn:disabled { opacity: .35; cursor: not-allowed; }
+    .mc-btn:active:not(:disabled) { transform: scale(.97); }
+    #btn-reset { background: none; border-color: rgba(200,60,60,.25); color: rgba(200,80,80,.7); font-size: 11px; }
+    #btn-reset:hover:not(:disabled) { border-color: #cc4455; color: #cc6677; background: rgba(200,60,60,.08); }
+    #warn-msg { font-size: 11px; opacity: .55; padding: 6px 0; display: none; }
+    #warn-msg.visible { display: block; }
+
+    /* ── Progress ── */
+    .prog-wrap { margin-bottom: 6px; }
+    .prog-track { width: 100%; height: 18px; border-radius: 5px; overflow: hidden; border: 1px solid; position: relative; }
+    .prog-fill { height: 100%; border-radius: 4px; transition: width .35s ease; position: relative; }
+    .prog-fill::after {
+      content: ''; position: absolute; top: 0; left: 0; right: 0;
+      height: 40%; background: rgba(255,255,255,.12); border-radius: 2px 2px 0 0;
+    }
+    .prog-pct { font-size: 10px; font-weight: 700; text-align: right; margin-top: 5px; margin-bottom: 14px; font-family: monospace; letter-spacing: 1px; }
+    .status-row { display: flex; align-items: center; gap: 9px; font-size: 12px; margin-bottom: 12px; opacity: .7; }
+    .sdot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; transition: background .3s; }
+    @keyframes blink { 50% { opacity: .1; } }
+    .sdot.running { animation: blink .7s step-end infinite; }
+
+    /* ── Terminal ── */
+    #terminal {
+      border-radius: 7px; padding: 12px 14px; height: 210px; overflow-y: auto;
+      font-family: 'Courier New', monospace; font-size: 11px; line-height: 1.8; border: 1px solid;
+      -webkit-overflow-scrolling: touch;
+    }
+    #terminal::-webkit-scrollbar { width: 4px; }
+    #terminal::-webkit-scrollbar-thumb { border-radius: 4px; background: rgba(255,255,255,.1); }
+    .log-row { display: flex; gap: 8px; }
+    .log-ts { flex-shrink: 0; opacity: .3; }
+    .log-warn { color: #d4aa4a !important; }
+    .log-error { color: #dd5555 !important; }
+    .log-dim { opacity: .35; }
+    .log-done { font-weight: 700; }
+
+    /* ── Download ── */
+    #dl-card { display: none; }
+    #dl-card.visible { display: block; }
+    #dl-btn {
+      width: 100%; padding: 18px; border-radius: 9px; border: 2px solid;
+      font-size: 14px; font-weight: 800; letter-spacing: 1px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px;
+      touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+      min-height: 58px; transition: all .2s;
+    }
+    #dl-btn:active { transform: scale(.98); }
+    #dl-meta { margin-top: 14px; font-size: 11px; line-height: 2.1; opacity: .6; }
+    #dl-meta strong { opacity: 1; font-weight: 600; }
+
+    footer { text-align: center; padding: 24px 16px; font-size: 10px; opacity: .3; letter-spacing: .5px; }
+
+    /* ── Mobile ── */
+    @media (max-width: 420px) {
+      .pack-row { grid-template-columns: 40px 28px 1fr auto auto auto; gap: 6px; }
+      .base-badge { display: none; }
+      #app-body { padding: 10px 10px 90px; }
+      .mc-tab { gap: 6px; padding: 12px 6px; }
+      .preview-panel.open { flex-direction: column; }
+      .preview-img-box { width: 60px; height: 60px; }
+    }
+    /* ── Desktop ── */
+    @media (min-width: 768px) {
+      #hero { padding: 40px 32px 28px; }
+      #app-body { padding: 20px 20px 80px; }
+      .card { padding: 22px 24px; }
+      #terminal { height: 240px; }
+    }
+  </style>
+  <style>
+    /* ── Nav Bar ── */
+    #navbar {
+      position: sticky; top: 0; z-index: 200;
+      display: flex; align-items: stretch;
+      border-bottom: 1px solid;
+      transition: background .4s, border-color .4s;
+    }
+    .nav-link {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 13px 16px; border: none; background: none; text-decoration: none;
+      font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 700;
+      letter-spacing: .6px; cursor: pointer; transition: all .25s;
+      min-height: 52px; touch-action: manipulation;
+      border-bottom: 2px solid transparent; white-space: nowrap;
+    }
+    .nav-link.active { border-bottom-color: var(--accent, #5ddb5d); }
+    .nav-brand {
+      display: flex; align-items: center; gap: 8px;
+      padding: 0 16px; font-size: 8px; font-weight: 700;
+      letter-spacing: 1px; opacity: .5; margin-right: auto;
+      white-space: nowrap;
+    }
+    @media (max-width: 480px) { .nav-brand { display: none; } .nav-link { padding: 13px 10px; font-size: 9px; } }
+  </style>
+</head>
+<body>
+
+<div id="navbar">
+  <span class="nav-brand" id="nav-brand">🎮 MC TOOLS</span>
+  <a class="nav-link active" id="nav-merger" href="index.html">🗂 Pack Merger</a>
+  <a class="nav-link" id="nav-updater" href="updater.html">⬆ Aggiorna Texture</a>
+</div>
+
+<div id="tabbar">
+  <button class="mc-tab" id="tab-java" onclick="switchMode('java')">
+    <span class="mc-tab-emoji">⛏</span>
+    <div>
+      <div class="mc-tab-label">Java Edition</div>
+      <div class="mc-tab-version">pack_format 84</div>
+    </div>
+  </button>
+  <button class="mc-tab" id="tab-bedrock" onclick="switchMode('bedrock')">
+    <span class="mc-tab-emoji">💎</span>
+    <div>
+      <div class="mc-tab-label">Bedrock Edition</div>
+      <div class="mc-tab-version">mcpack · mcaddon</div>
+    </div>
+  </button>
+</div>
+
+<div id="hero">
+  <div id="hero-glow"></div>
+  <div id="hero-title">RESOURCE PACK MERGER</div>
+  <div id="hero-sub">Unisci texture pack senza bloccare il browser · Elaborazione sequenziale</div>
+  <div id="version-pill"></div>
+</div>
+
+<div id="app-body">
+
+  <div class="card" id="upload-card">
+    <div class="card-title" id="upload-title">
+      📦 Pacchetti
+      <span class="mc-chip" id="pack-count-chip" style="display:none"></span>
+    </div>
+
+    <div id="drop-zone"
+      ondragover="event.preventDefault(); setDragOver(true)"
+      ondragleave="setDragOver(false)"
+      ondrop="handleDrop(event)"
+      onclick="document.getElementById('file-input').click()"
+    >
+      <span id="drop-icon">🗂</span>
+      <div id="drop-title">Trascina i file qui</div>
+      <div id="drop-sub">oppure usa il pulsante sotto</div>
+      <div id="drop-types"></div>
+      <button id="file-btn" onclick="event.stopPropagation(); document.getElementById('file-input').click()">
+        📁 Seleziona file
+      </button>
+    </div>
+    <input type="file" id="file-input" multiple style="display:none" onchange="handleFileInput(this)" />
+
+    <div id="info-box"></div>
+    <div id="empty-state" class="visible">Nessun file caricato.<br/>Trascina i tuoi file qui sopra.</div>
+    <div id="pack-list"></div>
+  </div>
+
+  <div class="card" id="controls-card">
+    <div class="card-title">⚙ Avvio</div>
+    <div id="controls">
+      <button class="mc-btn" id="btn-merge" onclick="runMerge()">▶ AVVIA MERGE</button>
+      <button class="mc-btn" id="btn-reset" onclick="resetAll()">✕ Reset</button>
+    </div>
+    <div id="warn-msg">⚠ Aggiungi almeno 2 pacchetti</div>
+  </div>
+
+  <div class="card" id="progress-card">
+    <div class="card-title">📊 Stato</div>
+    <div class="status-row">
+      <span class="sdot" id="sdot"></span>
+      <span id="phase-label">In attesa</span>
+    </div>
+    <div class="prog-wrap">
+      <div class="prog-track" id="prog-track">
+        <div class="prog-fill" id="prog-fill" style="width:0%"></div>
+      </div>
+      <div class="prog-pct" id="prog-pct">0%</div>
+    </div>
+    <div id="terminal">
+      <span id="term-placeholder">// Il log apparirà qui durante l'elaborazione...</span>
+    </div>
+  </div>
+
+  <div class="card" id="dl-card">
+    <div class="card-title" id="dl-title">✅ Pack pronto</div>
+    <a id="dl-link" href="#" download>
+      <button id="dl-btn">⬇ SCARICA</button>
+    </a>
+    <div id="dl-meta"></div>
+  </div>
+
+</div>
+
+<footer>MC Resource Pack Merger · Elaborazione locale · Nessun dato inviato a server<br/>© 2026 ꜰʀᴀɴᴄᴇꜱᴄᴏʟᴀʙ — ɢᴀᴍɪɴɢ ᴍɪɴᴇᴄʀᴀꜰᴛ</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+// ─── Themes ──────────────────────────────────────────────────────────────────
+const THEMES = {
+  java: {
+    id:"java", label:"Java Edition", emoji:"⛏",
+    accent:"#5ddb5d", accentDim:"#1e4a1e", accentGlow:"rgba(93,219,93,0.35)", accentFaint:"rgba(93,219,93,0.08)",
+    bg:"#0d0e1a", bgCard:"#10131e", bgDeep:"#080910", bgDrop:"#0a0d0f",
+    border:"#1e2838", borderAccent:"#2e5c2e",
+    text:"#c8dcc8", textDim:"#4a6a4a",
+    progressGrad:"linear-gradient(90deg,#1a5a1a,#2e8a2e,#5ddb5d)",
+    tabBg:"#0a1a0a", badgeBg:"#0f2e0f",
+    logOk:"#5ddb5d", logInfo:"#7aaa7a", logDim:"#2a4a2a", logDone:"#a0f0a0",
+    displayFont:"'Press Start 2P', monospace",
+    accept:".zip", fileDesc:".zip", outputExt:".zip",
+    versionLabel:"pack_format 84 · Java 26w20a+",
+    infoHtml:'Il pack in cima ha <strong>priorità massima</strong>. Il pack <strong>★ Base</strong> fornisce <code>pack.png</code> e la descrizione di <code>pack.mcmeta</code>.',
+    badgeLabel:"★ BASE",
+    imgKey:"pack.png", metaKeys:["pack.mcmeta"], manifestKeys:[],
+  },
+  bedrock: {
+    id:"bedrock", label:"Bedrock Edition", emoji:"💎",
+    accent:"#38a2ff", accentDim:"#0a3060", accentGlow:"rgba(56,162,255,0.35)", accentFaint:"rgba(56,162,255,0.08)",
+    bg:"#060b14", bgCard:"#0a1020", bgDeep:"#03080f", bgDrop:"#050d1a",
+    border:"#0f2040", borderAccent:"#1a3a5c",
+    text:"#c0d8f0", textDim:"#2a5a8a",
+    progressGrad:"linear-gradient(90deg,#0a2a5a,#1a6acc,#38a2ff)",
+    tabBg:"#050f20", badgeBg:"#071428",
+    logOk:"#38a2ff", logInfo:"#5a8ab0", logDim:"#1a3050", logDone:"#7ad4ff",
+    displayFont:"'Orbitron', sans-serif",
+    accept:".mcpack,.mcaddon,.zip", fileDesc:".mcpack / .mcaddon / .zip", outputExt:".mcpack",
+    versionLabel:"format_version 2 · engine [1,21,130] · Bedrock 26.20",
+    infoHtml:'Il pack in cima ha <strong>priorità massima</strong>. Il pack <strong>◆ Base</strong> fornisce <code>manifest.json</code> (UUID + nome) e <code>pack_icon.png</code>. Supporta <code>.mcpack</code> (texture) e <code>.mcaddon</code> (addon). UUID modulo rigenerato automaticamente.',
+    badgeLabel:"◆ BASE",
+    imgKey:"pack_icon.png", metaKeys:[], manifestKeys:["manifest.json","pack_manifest.json"],
+  },
+};
+
+// ─── State ───────────────────────────────────────────────────────────────────
+let mode = "java";
+let packs = [];      // { id, file, name, size, preview: null | { imgUrl, description, format, extraTags } }
+let baseId = null;
+let phase = "idle";
+let dlBlobUrl = null;
+let openPreviews = new Set(); // pack ids with preview panel open
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+const fmtBytes = b => b<1024?b+" B":b<1048576?(b/1024).toFixed(1)+" KB":(b/1048576).toFixed(2)+" MB";
+const ts = () => { const d=new Date(); return `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}:${String(d.getSeconds()).padStart(2,"0")}`; };
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+function uuidv4() {
+  return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
+    (c ^ (crypto.getRandomValues(new Uint8Array(1))[0] & (15>>(c/4)))).toString(16));
+}
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ─── Minecraft Color Code Renderer ───────────────────────────────────────────
+// Supports both § (section sign) and & (ampersand) prefixes
+const MC_COLORS = {
+  '0': '#000000', '1': '#0000AA', '2': '#00AA00', '3': '#00AAAA',
+  '4': '#AA0000', '5': '#AA00AA', '6': '#FFAA00', '7': '#AAAAAA',
+  '8': '#555555', '9': '#5555FF', 'a': '#55FF55', 'b': '#55FFFF',
+  'c': '#FF5555', 'd': '#FF55FF', 'e': '#FFFF55', 'f': '#FFFFFF',
+};
+const MC_FORMAT = {
+  'l': 'font-weight:bold',
+  'o': 'font-style:italic',
+  'n': 'text-decoration:underline',
+  'm': 'text-decoration:line-through',
+};
+
+function renderMcText(raw) {
+  if (!raw) return '';
+  const str = String(raw);
+  // Normalize & to § only when followed by a valid MC code char
+  const normalized = str.replace(/&(?=[0-9a-fk-orA-FK-OR])/g, '\u00a7');
+  const hasAnyCode = /\u00a7[0-9a-fk-orA-FK-OR]/i.test(normalized);
+  if (!hasAnyCode) return escHtml(str);
+
+  const segments = normalized.split(/\u00a7([0-9a-fk-orA-FK-OR])/i);
+  let html = '';
+  let currentColor = null;
+  let currentFormats = [];
+
+  if (segments[0]) html += `<span>${escHtml(segments[0])}</span>`;
+
+  for (let i = 1; i < segments.length; i += 2) {
+    const code = segments[i].toLowerCase();
+    const text = segments[i + 1] || '';
+
+    if (code === 'r') {
+      currentColor = null; currentFormats = [];
+    } else if (MC_COLORS[code]) {
+      currentColor = MC_COLORS[code]; currentFormats = [];
+    } else if (MC_FORMAT[code]) {
+      if (!currentFormats.includes(MC_FORMAT[code])) currentFormats.push(MC_FORMAT[code]);
+    }
+    // 'k' (obfuscated) shown as normal text
+
+    if (text) {
+      let style = '';
+      if (currentColor) style += `color:${currentColor};`;
+      if (currentFormats.length) style += currentFormats.join(';') + ';';
+      html += style
+        ? `<span style="${style}">${escHtml(text)}</span>`
+        : `<span>${escHtml(text)}</span>`;
+    }
+  }
+  return html;
+}
+
+function hasMcCodes(str) {
+  return /[&\u00a7][0-9a-fk-orA-FK-OR]/i.test(String(str));
+}
+
+// ─── Preview Extraction ───────────────────────────────────────────────────────
+async function extractPreview(pack) {
+  if (!window.JSZip) return null;
+  const t = THEMES[mode];
+  try {
+    const buf = await pack.file.arrayBuffer();
+    const zip = await JSZip.loadAsync(buf);
+    const entries = zip.files;
+    let imgUrl = null, description = null, extraTags = [];
+
+    // Find image
+    for (const fname of Object.keys(entries)) {
+      if (fname.toLowerCase() === t.imgKey) {
+        const bytes = await entries[fname].async('uint8array');
+        const blob = new Blob([bytes], {type:'image/png'});
+        imgUrl = URL.createObjectURL(blob);
+        break;
+      }
+    }
+
+    // Java: parse pack.mcmeta
+    if (mode === 'java') {
+      for (const fname of Object.keys(entries)) {
+        if (fname.toLowerCase() === 'pack.mcmeta') {
+          try {
+            const raw = await entries[fname].async('string');
+            const meta = JSON.parse(raw);
+            description = meta?.pack?.description ?? null;
+            const pf = meta?.pack?.pack_format;
+            if (pf !== undefined) extraTags.push('pack_format ' + pf);
+          } catch(e) { description = '(pack.mcmeta non valido)'; }
+          break;
+        }
+      }
+    }
+
+    // Bedrock: parse manifest.json
+    if (mode === 'bedrock') {
+      for (const fname of Object.keys(entries)) {
+        const lo = fname.toLowerCase();
+        if (lo === 'manifest.json' || lo === 'pack_manifest.json') {
+          try {
+            const raw = await entries[fname].async('string');
+            const m = JSON.parse(raw);
+            description = m?.header?.description ?? null;
+            const hname = m?.header?.name;
+            if (hname) extraTags.push('📛 ' + hname);
+            const fv = m?.format_version;
+            if (fv !== undefined) extraTags.push('format_version ' + fv);
+            const mev = m?.header?.min_engine_version;
+            if (mev) extraTags.push('engine [' + mev.join(',') + ']');
+          } catch(e) { description = '(manifest.json non valido)'; }
+          break;
+        }
+      }
+    }
+
+    // Count files
+    const fileCount = Object.values(entries).filter(e => !e.dir).length;
+    extraTags.push(fileCount + ' file');
+
+    return { imgUrl, description, extraTags };
+  } catch(e) {
+    return { imgUrl: null, description: '(impossibile leggere il pack)', extraTags: [] };
+  }
+}
+
+// ─── Toggle Preview ───────────────────────────────────────────────────────────
+async function togglePreview(packId) {
+  const t = THEMES[mode];
+  const panel = document.getElementById('preview-panel-'+packId);
+  const btn = document.getElementById('prev-btn-'+packId);
+  if (!panel || !btn) return;
+
+  if (openPreviews.has(packId)) {
+    openPreviews.delete(packId);
+    panel.classList.remove('open');
+    btn.textContent = '👁 Preview';
+    btn.style.borderColor = t.borderAccent;
+    btn.style.color = t.textDim;
+    return;
+  }
+
+  openPreviews.add(packId);
+  panel.classList.add('open');
+  btn.textContent = '▲ Chiudi';
+  btn.style.borderColor = t.accent;
+  btn.style.color = t.accent;
+
+  const pack = packs.find(p => p.id === packId);
+  if (!pack) return;
+
+  // If already loaded, just show
+  if (pack.preview !== undefined && pack.preview !== 'loading') return;
+
+  // Mark as loading
+  pack.preview = 'loading';
+  panel.innerHTML = '<div class="preview-loading">⏳ Lettura del pack...</div>';
+
+  const result = await extractPreview(pack);
+  pack.preview = result;
+  renderPreviewPanel(panel, result, packId);
+}
+
+function renderPreviewPanel(panel, preview, packId) {
+  const t = THEMES[mode];
+  if (!preview) {
+    panel.innerHTML = '<div class="preview-loading" style="color:'+t.logDim+'">Nessuna anteprima disponibile.</div>';
+    return;
+  }
+  const imgHtml = preview.imgUrl
+    ? `<img src="${escHtml(preview.imgUrl)}" alt="Pack icon" />`
+    : `<span>🎨</span>`;
+  const imgBoxClass = preview.imgUrl ? 'preview-img-box' : 'preview-img-box no-img';
+
+  const desc = preview.description
+    ? renderMcText(preview.description)
+    : '<em>Nessuna descrizione trovata</em>';
+  const descClass = preview.description ? 'preview-desc' : 'preview-desc empty';
+
+  const tagsHtml = (preview.extraTags||[]).map(tag =>
+    `<span class="preview-tag" style="border-color:${t.borderAccent};color:${t.textDim}">${escHtml(tag)}</span>`
+  ).join('');
+
+  panel.innerHTML = `
+    <div class="${imgBoxClass}" style="border-color:${t.borderAccent};background:${t.bgDeep}">${imgHtml}</div>
+    <div class="preview-text">
+      <div class="${descClass}" style="color:${preview.description ? (hasMcCodes(preview.description) ? 'inherit' : t.text) : t.textDim}">${desc}</div>
+      <div class="preview-tags">${tagsHtml}</div>
+    </div>
+  `;
+}
+
+// ─── Theme Application ───────────────────────────────────────────────────────
+function applyTheme(t) {
+  document.body.style.background = t.bg;
+  document.body.style.color = t.text;
+  document.documentElement.style.setProperty('--accent', t.accent);
+
+  // Navbar
+  const nb = document.getElementById('navbar');
+  if (nb) {
+    nb.style.background = t.bgCard; nb.style.borderColor = t.border;
+    document.querySelectorAll('.nav-link').forEach(a => {
+      a.style.color = a.classList.contains('active') ? t.accent : t.textDim;
+      if (a.classList.contains('active')) a.style.borderBottomColor = t.accent;
+    });
+    const brand = document.getElementById('nav-brand');
+    if (brand) { brand.style.color = t.textDim; brand.style.fontFamily = t.displayFont; }
+  }
+
+  const tabbar = document.getElementById('tabbar');
+  tabbar.style.background = t.bgCard;
+  tabbar.style.borderColor = t.border;
+
+  ['java','bedrock'].forEach(id => {
+    const th = THEMES[id];
+    const tab = document.getElementById('tab-'+id);
+    if (id === mode) {
+      tab.style.background = th.tabBg; tab.style.color = th.accent;
+      tab.style.borderBottomColor = th.accent;
+      tab.style.fontFamily = th.displayFont; tab.style.fontSize = '10px';
+    } else {
+      tab.style.background = 'none'; tab.style.color = t.textDim;
+      tab.style.borderBottomColor = 'transparent';
+      tab.style.fontFamily = 'Inter, sans-serif'; tab.style.fontSize = '11px';
+    }
+  });
+
+  const hero = document.getElementById('hero');
+  hero.style.background = `linear-gradient(180deg,${t.bgCard} 0%,${t.bg} 100%)`;
+  hero.style.borderColor = t.borderAccent;
+  document.getElementById('hero-glow').style.background = `radial-gradient(ellipse 70% 60% at 50% 0%,${t.accentFaint} 0%,transparent 70%)`;
+  const title = document.getElementById('hero-title');
+  title.style.fontFamily = t.displayFont; title.style.color = t.accent;
+  title.style.textShadow = `0 0 24px ${t.accentGlow}`;
+  const pill = document.getElementById('version-pill');
+  pill.textContent = t.versionLabel; pill.style.borderColor = t.borderAccent;
+  pill.style.color = t.textDim; pill.style.background = t.bgCard;
+
+  document.querySelectorAll('.card').forEach(c => {
+    c.style.background = t.bgCard;
+    c.style.borderColor = c.id === 'dl-card' && dlBlobUrl ? t.accent : t.border;
+  });
+  document.querySelectorAll('.card-title').forEach(c => { c.style.color = t.accent; c.style.opacity = '.7'; });
+  if (dlBlobUrl) {
+    const dt = document.getElementById('dl-title');
+    if (dt) { dt.style.opacity = '1'; dt.style.color = t.accent; }
+  }
+
+  const dz = document.getElementById('drop-zone');
+  dz.style.borderColor = t.borderAccent; dz.style.background = t.bgDrop; dz.style.color = t.text;
+  document.getElementById('drop-title').style.color = t.accent;
+  document.getElementById('drop-types').textContent = 'Accetta: ' + t.fileDesc;
+  const fb = document.getElementById('file-btn');
+  fb.style.background = t.accentDim; fb.style.borderColor = t.accent; fb.style.color = t.accent;
+  document.getElementById('file-input').accept = t.accept;
+
+  const ib = document.getElementById('info-box');
+  ib.style.borderColor = t.accentDim; ib.style.background = t.bgDrop; ib.style.color = t.textDim;
+  ib.querySelectorAll('code').forEach(c => { c.style.background = t.bgCard; c.style.color = t.accent; });
+
+  document.getElementById('empty-state').style.color = t.textDim;
+
+  const bm = document.getElementById('btn-merge');
+  bm.style.background = t.accentDim; bm.style.borderColor = t.accent;
+  bm.style.color = t.accent; bm.style.boxShadow = `0 0 16px ${t.accentFaint}`;
+
+  document.getElementById('prog-track').style.background = t.bgDeep;
+  document.getElementById('prog-track').style.borderColor = t.border;
+  document.getElementById('prog-fill').style.background = t.progressGrad;
+  document.getElementById('prog-fill').style.boxShadow = `0 0 14px ${t.accentGlow}`;
+  document.getElementById('prog-pct').style.color = t.accent;
+  document.getElementById('phase-label').style.color = t.textDim;
+
+  const term = document.getElementById('terminal');
+  term.style.background = t.bgDeep; term.style.borderColor = t.border;
+  const tp = document.getElementById('term-placeholder');
+  if (tp) tp.style.color = t.logDim;
+
+  document.getElementById('dl-btn').style.background = t.accentDim;
+  document.getElementById('dl-btn').style.borderColor = t.accent;
+  document.getElementById('dl-btn').style.color = t.accent;
+  document.getElementById('dl-btn').style.boxShadow = `0 0 32px ${t.accentGlow}`;
+  document.getElementById('dl-meta').style.color = t.textDim;
+
+  const chip = document.getElementById('pack-count-chip');
+  chip.style.borderColor = t.borderAccent; chip.style.color = t.accent; chip.style.background = t.badgeBg;
+
+  renderPackList();
+}
+
+// ─── Mode Switch ─────────────────────────────────────────────────────────────
+function switchMode(newMode) {
+  if (newMode === mode) return;
+  // Revoke old preview blob URLs
+  packs.forEach(p => { if (p.preview && p.preview.imgUrl) URL.revokeObjectURL(p.preview.imgUrl); });
+  mode = newMode;
+  openPreviews.clear();
+  resetAll(false);
+  applyTheme(THEMES[mode]);
+}
+
+// ─── Drag & Drop ─────────────────────────────────────────────────────────────
+function setDragOver(val) {
+  const dz = document.getElementById('drop-zone');
+  const t = THEMES[mode];
+  if (val) {
+    dz.classList.add('over');
+    document.getElementById('drop-icon').textContent = '📂';
+    dz.style.borderColor = t.accent; dz.style.background = t.bgCard;
+    dz.style.boxShadow = `0 0 0 2px ${t.accentFaint} inset`;
+  } else {
+    dz.classList.remove('over');
+    document.getElementById('drop-icon').textContent = '🗂';
+    dz.style.borderColor = t.borderAccent; dz.style.background = t.bgDrop; dz.style.boxShadow = '';
+  }
+}
+function handleDrop(e) { e.preventDefault(); setDragOver(false); addFiles(e.dataTransfer.files); }
+function handleFileInput(input) { addFiles(input.files); input.value = ''; }
+
+// ─── Pack Management ─────────────────────────────────────────────────────────
+function addFiles(files) {
+  const valid = Array.from(files).filter(f => {
+    const lo = f.name.toLowerCase();
+    return lo.endsWith('.zip') || lo.endsWith('.mcpack') || lo.endsWith('.mcaddon');
+  });
+  if (!valid.length) return;
+  const existing = new Set(packs.map(p => p.name));
+  const added = valid.filter(f => !existing.has(f.name)).map(f => ({
+    id: uuidv4(), file: f, name: f.name, size: f.size, preview: undefined
+  }));
+  packs = [...packs, ...added];
+  if (packs.length > 0 && !baseId) baseId = packs[0].id;
+  renderPackList();
+  updateUI();
+  // Auto-load previews for new packs (thumbnail only — lazy)
+  added.forEach(p => loadThumbnail(p));
+}
+
+async function loadThumbnail(pack) {
+  const t = THEMES[mode];
+  if (!window.JSZip) return;
+  try {
+    const buf = await pack.file.arrayBuffer();
+    const zip = await JSZip.loadAsync(buf);
+    for (const fname of Object.keys(zip.files)) {
+      if (fname.toLowerCase() === t.imgKey) {
+        const bytes = await zip.files[fname].async('uint8array');
+        const blob = new Blob([bytes], {type:'image/png'});
+        if (!pack.thumbUrl) pack.thumbUrl = URL.createObjectURL(blob);
+        // Update thumbnail in DOM
+        const thumb = document.getElementById('thumb-'+pack.id);
+        if (thumb) {
+          thumb.innerHTML = `<img src="${escHtml(pack.thumbUrl)}" alt="" />`;
+        }
+        break;
+      }
+    }
+  } catch(e) { /* silent */ }
+}
+
+function movePack(id, dir) {
+  const i = packs.findIndex(p => p.id === id), nx = i+dir;
+  if (nx<0||nx>=packs.length) return;
+  const a=[...packs]; [a[i],a[nx]]=[a[nx],a[i]]; packs=a;
+  renderPackList(); updateUI();
+}
+function removePack(id) {
+  const p = packs.find(x => x.id === id);
+  if (p) {
+    if (p.thumbUrl) URL.revokeObjectURL(p.thumbUrl);
+    if (p.preview && p.preview.imgUrl) URL.revokeObjectURL(p.preview.imgUrl);
+  }
+  openPreviews.delete(id);
+  packs = packs.filter(p => p.id !== id);
+  if (baseId === id) baseId = packs[0]?.id ?? null;
+  if (packs.length === 0) baseId = null;
+  renderPackList(); updateUI();
+}
+function setBase(id) { baseId = id; renderPackList(); }
+
+// ─── Render Pack List ─────────────────────────────────────────────────────────
+function renderPackList() {
+  const t = THEMES[mode];
+  const list = document.getElementById('pack-list');
+  const empty = document.getElementById('empty-state');
+  const info = document.getElementById('info-box');
+  const chip = document.getElementById('pack-count-chip');
+
+  if (packs.length === 0) {
+    list.innerHTML = ''; empty.classList.add('visible');
+    info.classList.remove('visible'); chip.style.display = 'none'; return;
+  }
+
+  empty.classList.remove('visible');
+  info.classList.add('visible');
+  info.innerHTML = t.infoHtml;
+  info.querySelectorAll('code').forEach(c => { c.style.background = t.bgCard; c.style.color = t.accent; });
+  info.querySelectorAll('strong').forEach(s => { s.style.color = t.accent; });
+
+  chip.style.display = 'inline-block';
+  chip.textContent = packs.length;
+
+  list.innerHTML = packs.map((pack, i) => {
+    const isBase = pack.id === baseId;
+    const isOpen = openPreviews.has(pack.id);
+
+    const thumbContent = pack.thumbUrl
+      ? `<img src="${escHtml(pack.thumbUrl)}" alt="" />`
+      : (pack.preview === 'loading' ? '⌛' : '🎨');
+
+    const prevBtnColor = isOpen ? t.accent : t.textDim;
+    const prevBtnBorder = isOpen ? t.accent : t.borderAccent;
+
+    // Preview panel content
+    let panelContent = '';
+    if (isOpen && pack.preview && pack.preview !== 'loading') {
+      const preview = pack.preview;
+      const imgHtml = preview.imgUrl
+        ? `<img src="${escHtml(preview.imgUrl)}" alt="Pack icon" />`
+        : `<span>🎨</span>`;
+      const imgBoxClass = preview.imgUrl ? 'preview-img-box' : 'preview-img-box no-img';
+      const desc = preview.description
+        ? renderMcText(preview.description)
+        : '<em>Nessuna descrizione trovata</em>';
+      const descClass = preview.description ? 'preview-desc' : 'preview-desc empty';
+      const tagsHtml = (preview.extraTags||[]).map(tag =>
+        `<span class="preview-tag" style="border-color:${t.borderAccent};color:${t.textDim}">${escHtml(tag)}</span>`
+      ).join('');
+      panelContent = `
+        <div class="${imgBoxClass}" style="border-color:${t.borderAccent};background:${t.bgDeep}">${imgHtml}</div>
+        <div class="preview-text">
+          <div class="${descClass}" style="color:${preview.description ? (hasMcCodes(preview.description) ? 'inherit' : t.text) : t.textDim}">${desc}</div>
+          <div class="preview-tags">${tagsHtml}</div>
+        </div>`;
+    } else if (isOpen && pack.preview === 'loading') {
+      panelContent = `<div class="preview-loading" style="color:${t.logDim}">⏳ Lettura del pack...</div>`;
+    }
+
+    return `
+    <div class="pack-wrap${isBase?' is-base':''}" id="wrap-${pack.id}"
+         style="border-color:${isBase?t.accent:t.border};background:${t.bgCard}">
+      <div class="pack-row" style="background:${isBase?t.bgDrop:t.bgDeep}">
+        <div class="pack-thumb" id="thumb-${pack.id}"
+             style="border-color:${t.borderAccent};background:${t.bgDeep}">${thumbContent}</div>
+        <div class="prio-col">
+          <button class="prio-btn" style="border-color:${t.border};color:${t.textDim}"
+                  onclick="movePack('${pack.id}',-1)" ${i===0?'disabled':''}>▲</button>
+          <button class="prio-btn" style="border-color:${t.border};color:${t.textDim}"
+                  onclick="movePack('${pack.id}',1)" ${i===packs.length-1?'disabled':''}>▼</button>
+        </div>
+        <div class="pack-info">
+          <div class="pack-name" style="color:${t.text}" title="${escHtml(pack.name)}">${escHtml(pack.name)}</div>
+          <div class="pack-meta-row">
+            <span class="pack-size">${fmtBytes(pack.size)}</span>
+            ${isBase?`<span class="base-badge" style="border-color:${t.accent};color:${t.accent};background:${t.badgeBg}">${t.badgeLabel}</span>`:''}
+          </div>
+        </div>
+        <button class="preview-toggle" id="prev-btn-${pack.id}"
+                style="border-color:${prevBtnBorder};color:${prevBtnColor};background:${t.bgDeep}"
+                onclick="togglePreview('${pack.id}')">
+          ${isOpen ? '▲ Chiudi' : '👁 Preview'}
+        </button>
+        <label class="base-label" style="color:${t.textDim}">
+          <input type="radio" name="base-pack" class="pack-radio"
+                 style="border-color:${isBase?t.accent:t.borderAccent};background:${isBase?t.accentDim:t.bgDeep}"
+                 ${isBase?'checked':''} onchange="setBase('${pack.id}')" />
+          Base
+        </label>
+        <button class="rm-btn" onclick="removePack('${pack.id}')" title="Rimuovi">✕</button>
+      </div>
+      <div class="preview-panel${isOpen?' open':''}" id="preview-panel-${pack.id}"
+           style="border-color:${t.border};background:${t.bgDeep}">
+        ${panelContent}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ─── UI State ─────────────────────────────────────────────────────────────────
+function updateUI() {
+  const t = THEMES[mode];
+  const running = phase === 'running';
+  const bm = document.getElementById('btn-merge');
+  const br = document.getElementById('btn-reset');
+  bm.disabled = packs.length < 2 || running;
+  br.disabled = running;
+  bm.textContent = running ? '⏳ Elaborazione...' : `▶ AVVIA MERGE (${packs.length} pack)`;
+  const warn = document.getElementById('warn-msg');
+  warn.classList.toggle('visible', packs.length === 1);
+  if (warn.classList.contains('visible')) warn.style.color = t.textDim;
+
+  const sdot = document.getElementById('sdot');
+  sdot.className = 'sdot ' + phase;
+  if (phase==='running') { sdot.style.background=t.accent; sdot.style.boxShadow=`0 0 8px ${t.accent}`; }
+  else if (phase==='done') { sdot.style.background=t.accent; sdot.style.boxShadow=''; }
+  else if (phase==='error') { sdot.style.background='#dd5555'; sdot.style.boxShadow=''; }
+  else { sdot.style.background='#444'; sdot.style.boxShadow=''; }
+
+  document.getElementById('phase-label').textContent =
+    { idle:'In attesa', running:'Elaborazione...', done:'Completato ✓', error:'Errore' }[phase] || '';
+}
+
+function setProgress(pct) {
+  document.getElementById('prog-fill').style.width = pct + '%';
+  document.getElementById('prog-pct').textContent = pct + '%';
+}
+
+// ─── Logging ──────────────────────────────────────────────────────────────────
+function addLog(msg, type='info') {
+  const t = THEMES[mode];
+  const term = document.getElementById('terminal');
+  const ph = document.getElementById('term-placeholder');
+  if (ph) ph.style.display = 'none';
+  const row = document.createElement('div'); row.className = 'log-row';
+  const tsEl = document.createElement('span'); tsEl.className = 'log-ts'; tsEl.textContent = '['+ts()+']';
+  const msgEl = document.createElement('span'); msgEl.className = 'log-'+type; msgEl.textContent = msg;
+  if (type==='ok') msgEl.style.color = t.logOk;
+  else if (type==='info') msgEl.style.color = t.logInfo;
+  else if (type==='dim') msgEl.style.color = t.logDim;
+  else if (type==='done') { msgEl.style.color = t.logDone; msgEl.style.fontWeight='700'; }
+  row.appendChild(tsEl); row.appendChild(msgEl);
+  term.appendChild(row); term.scrollTop = term.scrollHeight;
+}
+
+// ─── Reset ────────────────────────────────────────────────────────────────────
+function resetAll(reapply=true) {
+  if (dlBlobUrl) { URL.revokeObjectURL(dlBlobUrl); dlBlobUrl = null; }
+  packs.forEach(p => {
+    if (p.thumbUrl) URL.revokeObjectURL(p.thumbUrl);
+    if (p.preview && p.preview.imgUrl) URL.revokeObjectURL(p.preview.imgUrl);
+  });
+  packs = []; baseId = null; phase = 'idle'; openPreviews.clear();
+  setProgress(0);
+  const term = document.getElementById('terminal');
+  term.innerHTML = '<span id="term-placeholder">// Il log apparirà qui durante l\'elaborazione...</span>';
+  document.getElementById('dl-card').classList.remove('visible');
+  renderPackList(); updateUI();
+  if (reapply) applyTheme(THEMES[mode]);
+}
+
+// ─── Merge ────────────────────────────────────────────────────────────────────
+async function runMerge() {
+  if (packs.length<2||!baseId||phase==='running') return;
+  if (dlBlobUrl) { URL.revokeObjectURL(dlBlobUrl); dlBlobUrl = null; }
+  document.getElementById('dl-card').classList.remove('visible');
+  document.getElementById('terminal').innerHTML = '';
+  phase = 'running'; setProgress(0); updateUI();
+  const t = THEMES[mode];
+  try {
+    const fn = mode==='java' ? mergeJava : mergeBedrock;
+    const { blob } = await fn();
+    setProgress(100);
+    addLog('─── Completato! '+fmtBytes(blob.size)+' ───', 'done');
+    dlBlobUrl = URL.createObjectURL(blob);
+    const base = packs.find(p => p.id===baseId);
+    const safeName = (base?.name ?? 'merged').replace(/\.(zip|mcpack|mcaddon)$/i,'');
+    const fname = mode==='java' ? `${safeName}_MERGED_pf84.zip` : `${safeName}_MERGED.mcpack`;
+    addLog('Pronto: "'+fname+'"', 'ok');
+    phase = 'done'; updateUI();
+    const dlCard = document.getElementById('dl-card');
+    dlCard.classList.add('visible'); dlCard.style.background=t.bgCard; dlCard.style.borderColor=t.accent;
+    const dlTit = document.getElementById('dl-title');
+    dlTit.style.opacity='1'; dlTit.style.color=t.accent;
+    document.getElementById('dl-link').href = dlBlobUrl;
+    document.getElementById('dl-link').download = fname;
+    document.getElementById('dl-btn').textContent = '⬇ SCARICA '+t.outputExt.toUpperCase();
+    document.getElementById('dl-meta').innerHTML =
+      `<strong style="color:${t.text}">${escHtml(fname)}</strong><br/>${t.versionLabel}<br/><span style="opacity:.4">Blob URL locale · nessun dato inviato a server</span>`;
+    dlCard.scrollIntoView({ behavior:'smooth', block:'nearest' });
+  } catch(e) {
+    addLog('ERRORE: '+e.message, 'error'); phase = 'error'; updateUI();
+  }
+}
+
+// ─── Java Merge ───────────────────────────────────────────────────────────────
+async function mergeJava() {
+  if (!window.JSZip) throw new Error('JSZip non disponibile');
+  addLog('JSZip pronto.', 'ok');
+  const mergedFiles = new Map();
+  let baseMeta=null, basePng=null;
+  const total = packs.length;
+  for (let i=0; i<total; i++) {
+    const pack=packs[i], isBase=pack.id===baseId;
+    addLog(`[${i+1}/${total}] Lettura: "${pack.name}" (${fmtBytes(pack.size)})${isBase?' ★ BASE':''}`, 'info');
+    const buf = await pack.file.arrayBuffer();
+    let zip;
+    try { zip = await JSZip.loadAsync(buf); }
+    catch(e) { addLog('  ✗ ZIP non valido: '+e.message, 'error'); continue; }
+    const entries = Object.keys(zip.files);
+    addLog('  → '+entries.length+' entry trovate.', 'dim');
+    let added=0;
+    for (const fname of entries) {
+      const entry=zip.files[fname]; if (entry.dir) continue;
+      const lo=fname.toLowerCase();
+      if (isBase&&lo==='pack.png') { basePng=await entry.async('uint8array'); addLog('  → pack.png Base catturata.','ok'); continue; }
+      if (isBase&&lo==='pack.mcmeta') {
+        try { baseMeta=JSON.parse(await entry.async('string')); addLog('  → pack.mcmeta Base: "'+baseMeta?.pack?.description+'"','ok'); }
+        catch { addLog('  ✗ pack.mcmeta malformato, uso default.','warn'); } continue;
+      }
+      if (lo==='pack.png'||lo==='pack.mcmeta') continue;
+      if (!mergedFiles.has(fname)) { mergedFiles.set(fname, await entry.async('uint8array')); added++; }
+    }
+    addLog('  → '+added+' nuovi file aggiunti.', 'dim');
+    zip.files={}; setProgress(Math.round(((i+1)/total)*74)); await sleep(8);
+  }
+  addLog('Pool: '+mergedFiles.size+' file unici. Composizione...','ok');
+  if (!baseMeta) baseMeta={pack:{pack_format:84,description:'Merged Resource Pack'}};
+  const finalMeta={...baseMeta,pack:{...baseMeta.pack,pack_format:84}};
+  addLog('  → pack_format aggiornato a 84 (Java 26w20a+).','ok');
+  setProgress(80);
+  addLog('Generazione ZIP finale...','info');
+  const outZip=new JSZip(); let n=0;
+  for (const [path,data] of mergedFiles) {
+    outZip.file(path,data);
+    if (++n%200===0) { setProgress(80+Math.round((n/mergedFiles.size)*12)); await sleep(4); }
+  }
+  outZip.file('pack.mcmeta',JSON.stringify(finalMeta,null,2));
+  if (basePng) outZip.file('pack.png',basePng); else addLog('  → Nessuna pack.png trovata.','warn');
+  setProgress(93);
+  addLog('Compressione DEFLATE ('+(n+2)+' file)...','info');
+  const blob = await outZip.generateAsync(
+    {type:'blob',compression:'DEFLATE',compressionOptions:{level:6}},
+    m=>setProgress(93+Math.round(m.percent*0.06))
+  );
+  return {blob,meta:finalMeta};
+}
+
+// ─── Bedrock Merge ────────────────────────────────────────────────────────────
+async function mergeBedrock() {
+  if (!window.JSZip) throw new Error('JSZip non disponibile');
+  addLog('JSZip pronto.', 'ok');
+  const mergedFiles=new Map();
+  let baseManifest=null, baseIcon=null;
+  // Track all module types found across all packs
+  const allModuleTypes = new Set();
+  const total=packs.length;
+
+  for (let i=0; i<total; i++) {
+    const pack=packs[i], isBase=pack.id===baseId;
+    const isAddon = pack.name.toLowerCase().endsWith('.mcaddon');
+    addLog(`[${i+1}/${total}] Apertura: "${pack.name}" (${fmtBytes(pack.size)})${isBase?' ◆ BASE':''}${isAddon?' [ADDON]':''}`, 'info');
+    const buf=await pack.file.arrayBuffer();
+    let zip;
+    try { zip=await JSZip.loadAsync(buf); }
+    catch(e) { addLog('  ✗ ZIP non valido: '+e.message,'error'); continue; }
+
+    // .mcaddon can contain nested .mcpack/.mcbehavior — flatten them
+    const entries=Object.keys(zip.files);
+    const nestedPacks = entries.filter(f => {
+      const lo=f.toLowerCase();
+      return !zip.files[f].dir && (lo.endsWith('.mcpack') || lo.endsWith('.mcbehavior'));
+    });
+
+    if (isAddon && nestedPacks.length > 0) {
+      addLog(`  → .mcaddon con ${nestedPacks.length} pack interni, estrazione...`, 'dim');
+      for (const nestedName of nestedPacks) {
+        const nestedBuf = await zip.files[nestedName].async('arraybuffer');
+        let nestedZip;
+        try { nestedZip = await JSZip.loadAsync(nestedBuf); }
+        catch(e) { addLog('  ✗ Pack interno non valido: '+nestedName,'warn'); continue; }
+        const nestedEntries = Object.keys(nestedZip.files);
+        addLog(`    → "${nestedName}": ${nestedEntries.length} entry`, 'dim');
+        let na=0;
+        for (const fname of nestedEntries) {
+          const entry=nestedZip.files[fname]; if (entry.dir) continue;
+          const lo=fname.toLowerCase();
+          if (isBase&&(lo==='manifest.json'||lo==='pack_manifest.json')) {
+            try {
+              const m=JSON.parse(await entry.async('string'));
+              if (!baseManifest) { baseManifest=m; addLog('    → manifest.json Base: "'+m?.header?.name+'"','ok'); }
+              if (m?.modules) m.modules.forEach(mod => { if(mod.type) allModuleTypes.add(mod.type); });
+            } catch { addLog('    ✗ manifest.json malformato.','warn'); } continue;
+          }
+          if (isBase&&lo==='pack_icon.png') { baseIcon=await entry.async('uint8array'); continue; }
+          if (lo==='manifest.json'||lo==='pack_manifest.json'||lo==='pack_icon.png') {
+            // Still collect module types from non-base manifests
+            if (lo==='manifest.json'||lo==='pack_manifest.json') {
+              try { const m=JSON.parse(await entry.async('string')); if(m?.modules) m.modules.forEach(mod=>{if(mod.type)allModuleTypes.add(mod.type);}); } catch{}
+            }
+            continue;
+          }
+          if (!mergedFiles.has(fname)) { mergedFiles.set(fname,await entry.async('uint8array')); na++; }
+        }
+        addLog(`    → ${na} nuovi file aggiunti.`, 'dim');
+        nestedZip.files={};
+      }
+      zip.files={}; setProgress(Math.round(((i+1)/total)*74)); await sleep(8);
+      continue;
+    }
+
+    // Normal .mcpack / .zip handling
+    addLog('  → '+entries.length+' entry trovate.','dim');
+    let added=0;
+    for (const fname of entries) {
+      const entry=zip.files[fname]; if (entry.dir) continue;
+      const lo=fname.toLowerCase();
+      if (isBase&&(lo==='manifest.json'||lo==='pack_manifest.json')) {
+        try {
+          baseManifest=JSON.parse(await entry.async('string'));
+          addLog('  → manifest.json Base: "'+baseManifest?.header?.name+'"','ok');
+          if (baseManifest?.modules) baseManifest.modules.forEach(m=>{if(m.type)allModuleTypes.add(m.type);});
+        } catch { addLog('  ✗ manifest.json malformato.','warn'); } continue;
+      }
+      if (isBase&&lo==='pack_icon.png') { baseIcon=await entry.async('uint8array'); addLog('  → pack_icon.png Base catturata.','ok'); continue; }
+      if (lo==='manifest.json'||lo==='pack_manifest.json'||lo==='pack_icon.png') {
+        if (lo==='manifest.json'||lo==='pack_manifest.json') {
+          try { const m=JSON.parse(await entry.async('string')); if(m?.modules) m.modules.forEach(mod=>{if(mod.type)allModuleTypes.add(mod.type);}); } catch{}
+        }
+        continue;
+      }
+      if (!mergedFiles.has(fname)) { mergedFiles.set(fname,await entry.async('uint8array')); added++; }
+    }
+    addLog('  → '+added+' nuovi file aggiunti.','dim');
+    zip.files={}; setProgress(Math.round(((i+1)/total)*74)); await sleep(8);
+  }
+
+  addLog('Pool: '+mergedFiles.size+' file unici. Costruzione manifest...','ok');
+
+  // Determine pack type from module types found
+  const isAddonMerge = allModuleTypes.has('data_driven') || allModuleTypes.has('javascript') || allModuleTypes.has('script');
+  const hasResources = allModuleTypes.has('resources') || allModuleTypes.size === 0;
+  if (isAddonMerge) addLog('  → Tipo rilevato: ADDON (data_driven/script).','ok');
+  else addLog('  → Tipo rilevato: RESOURCE PACK (texture/risorse).','ok');
+
+  const hUUID=baseManifest?.header?.uuid??uuidv4();
+  const desc=baseManifest?.header?.description??"Merged Pack";
+  const name=baseManifest?.header?.name??"Merged Pack";
+
+  // Build modules: preserve all types found, generate new UUIDs
+  let modules = [];
+  if (baseManifest?.modules && baseManifest.modules.length > 0) {
+    modules = baseManifest.modules.map(m => ({ ...m, uuid: uuidv4() }));
+  } else {
+    if (hasResources) modules.push({ description:desc, type:"resources", uuid:uuidv4(), version:[1,0,0] });
+    if (isAddonMerge) modules.push({ description:desc, type:"data_driven", uuid:uuidv4(), version:[1,0,0] });
+    if (allModuleTypes.has('script')||allModuleTypes.has('javascript')) {
+      modules.push({ description:desc, type:"script", uuid:uuidv4(), version:[1,0,0] });
+    }
+  }
+
+  const finalManifest={
+    format_version:2,
+    header:{name,description:desc,uuid:hUUID,version:[1,0,0],min_engine_version:[1,21,130]},
+    modules
+  };
+  addLog('  → UUID header preservato: '+hUUID.slice(0,18)+'...','ok');
+  modules.forEach((m,i) => addLog(`  → Modulo ${i+1} [${m.type}] UUID: `+m.uuid.slice(0,18)+'...','ok'));
+  addLog('  → min_engine_version [1,21,130] (Bedrock 26.20).','ok');
+  setProgress(80);
+  addLog('Generazione .mcpack finale...','info');
+  const outZip=new JSZip(); let n=0;
+  for (const [path,data] of mergedFiles) {
+    outZip.file(path,data);
+    if (++n%150===0) { setProgress(80+Math.round((n/mergedFiles.size)*12)); await sleep(4); }
+  }
+  outZip.file('manifest.json',JSON.stringify(finalManifest,null,2));
+  if (baseIcon) outZip.file('pack_icon.png',baseIcon); else addLog('  → Nessuna pack_icon.png trovata.','warn');
+  setProgress(93);
+  addLog('Compressione DEFLATE ('+(n+2)+' file)...','info');
+  const blob=await outZip.generateAsync(
+    {type:'blob',compression:'DEFLATE',compressionOptions:{level:6}},
+    m=>setProgress(93+Math.round(m.percent*0.06))
+  );
+  return {blob,meta:finalManifest};
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+applyTheme(THEMES[mode]);
+updateUI();
+</script>
+</body>
+</html>
