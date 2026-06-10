@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="description" content="Unisci resource pack di Minecraft Java & Bedrock Edition direttamente nel browser. Nessun server, nessun dato inviato." />
-  <title>MC Resource Pack Merger</title>
+  <title>Unificatore Resource Pack MC</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Orbitron:wght@700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -329,8 +329,9 @@
 
 <div id="navbar">
   <span class="nav-brand" id="nav-brand">🎮 MC TOOLS</span>
-  <a class="nav-link active" id="nav-merger" href="index.html">🗂 Pack Merger</a>
+  <a class="nav-link active" id="nav-merger" href="index.html">🗂 Unificatore Pack</a>
   <a class="nav-link" id="nav-updater" href="updater.html">⬆ Aggiorna Texture</a>
+  <a class="nav-link" id="nav-converter" href="converter.html">🔄 Convertitore</a>
 </div>
 
 <div id="tabbar">
@@ -352,7 +353,7 @@
 
 <div id="hero">
   <div id="hero-glow"></div>
-  <div id="hero-title">RESOURCE PACK MERGER</div>
+  <div id="hero-title">UNIFICATORE RESOURCE PACK</div>
   <div id="hero-sub">Unisci texture pack senza bloccare il browser · Elaborazione sequenziale</div>
   <div id="version-pill"></div>
 </div>
@@ -376,7 +377,7 @@
       <div id="drop-sub">oppure usa il pulsante sotto</div>
       <div id="drop-types"></div>
       <button id="file-btn" onclick="event.stopPropagation(); document.getElementById('file-input').click()">
-        📁 Seleziona file
+        📁 Sfoglia file
       </button>
     </div>
     <input type="file" id="file-input" multiple style="display:none" onchange="handleFileInput(this)" />
@@ -389,8 +390,8 @@
   <div class="card" id="controls-card">
     <div class="card-title">⚙ Avvio</div>
     <div id="controls">
-      <button class="mc-btn" id="btn-merge" onclick="runMerge()">▶ AVVIA MERGE</button>
-      <button class="mc-btn" id="btn-reset" onclick="resetAll()">✕ Reset</button>
+      <button class="mc-btn" id="btn-merge" onclick="runMerge()">▶ AVVIA UNIONE</button>
+      <button class="mc-btn" id="btn-reset" onclick="resetAll()">✕ Azzera</button>
     </div>
     <div id="warn-msg">⚠ Aggiungi almeno 2 pacchetti</div>
   </div>
@@ -413,7 +414,7 @@
   </div>
 
   <div class="card" id="dl-card">
-    <div class="card-title" id="dl-title">✅ Pack pronto</div>
+    <div class="card-title" id="dl-title">✅ File pronto per il download</div>
     <a id="dl-link" href="#" download>
       <button id="dl-btn">⬇ SCARICA</button>
     </a>
@@ -422,7 +423,7 @@
 
 </div>
 
-<footer>MC Resource Pack Merger · Elaborazione locale · Nessun dato inviato a server<br/>© 2026 ꜰʀᴀɴᴄᴇꜱᴄᴏʟᴀʙ — ɢᴀᴍɪɴɢ ᴍɪɴᴇᴄʀᴀꜰᴛ</footer>
+<footer>Unificatore Resource Pack MC · Elaborazione locale · Nessun dato inviato a server<br/>© 2026 ꜰʀᴀɴᴄᴇꜱᴄᴏʟᴀʙ — ɢᴀᴍɪɴɢ ᴍɪɴᴇᴄʀᴀꜰᴛ</footer>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>
@@ -618,7 +619,7 @@ async function togglePreview(packId) {
   if (openPreviews.has(packId)) {
     openPreviews.delete(packId);
     panel.classList.remove('open');
-    btn.textContent = '👁 Preview';
+    btn.textContent = '👁 Anteprima';
     btn.style.borderColor = t.borderAccent;
     btn.style.color = t.textDim;
     return;
@@ -638,7 +639,7 @@ async function togglePreview(packId) {
 
   // Mark as loading
   pack.preview = 'loading';
-  panel.innerHTML = '<div class="preview-loading">⏳ Lettura del pack...</div>';
+  panel.innerHTML = '<div class="preview-loading">⏳ Lettura del pack in corso...</div>';
 
   const result = await extractPreview(pack);
   pack.preview = result;
@@ -652,7 +653,7 @@ function renderPreviewPanel(panel, preview, packId) {
     return;
   }
   const imgHtml = preview.imgUrl
-    ? `<img src="${escHtml(preview.imgUrl)}" alt="Pack icon" />`
+    ? `<img src="${escHtml(preview.imgUrl)}" alt="Icona pack" />`
     : `<span>🎨</span>`;
   const imgBoxClass = preview.imgUrl ? 'preview-img-box' : 'preview-img-box no-img';
 
@@ -734,7 +735,7 @@ function applyTheme(t) {
   const dz = document.getElementById('drop-zone');
   dz.style.borderColor = t.borderAccent; dz.style.background = t.bgDrop; dz.style.color = t.text;
   document.getElementById('drop-title').style.color = t.accent;
-  document.getElementById('drop-types').textContent = 'Accetta: ' + t.fileDesc;
+  document.getElementById('drop-types').textContent = 'Formati accettati: ' + t.fileDesc;
   const fb = document.getElementById('file-btn');
   fb.style.background = t.accentDim; fb.style.borderColor = t.accent; fb.style.color = t.accent;
   document.getElementById('file-input').accept = t.accept;
@@ -901,7 +902,7 @@ function renderPackList() {
     if (isOpen && pack.preview && pack.preview !== 'loading') {
       const preview = pack.preview;
       const imgHtml = preview.imgUrl
-        ? `<img src="${escHtml(preview.imgUrl)}" alt="Pack icon" />`
+        ? `<img src="${escHtml(preview.imgUrl)}" alt="Icona pack" />`
         : `<span>🎨</span>`;
       const imgBoxClass = preview.imgUrl ? 'preview-img-box' : 'preview-img-box no-img';
       const desc = preview.description
@@ -943,13 +944,13 @@ function renderPackList() {
         <button class="preview-toggle" id="prev-btn-${pack.id}"
                 style="border-color:${prevBtnBorder};color:${prevBtnColor};background:${t.bgDeep}"
                 onclick="togglePreview('${pack.id}')">
-          ${isOpen ? '▲ Chiudi' : '👁 Preview'}
+          ${isOpen ? '▲ Chiudi' : '👁 Anteprima'}
         </button>
         <label class="base-label" style="color:${t.textDim}">
           <input type="radio" name="base-pack" class="pack-radio"
                  style="border-color:${isBase?t.accent:t.borderAccent};background:${isBase?t.accentDim:t.bgDeep}"
                  ${isBase?'checked':''} onchange="setBase('${pack.id}')" />
-          Base
+          Principale
         </label>
         <button class="rm-btn" onclick="removePack('${pack.id}')" title="Rimuovi">✕</button>
       </div>
@@ -969,7 +970,7 @@ function updateUI() {
   const br = document.getElementById('btn-reset');
   bm.disabled = packs.length < 2 || running;
   br.disabled = running;
-  bm.textContent = running ? '⏳ Elaborazione...' : `▶ AVVIA MERGE (${packs.length} pack)`;
+  bm.textContent = running ? '⏳ Elaborazione in corso...' : `▶ AVVIA UNIONE (${packs.length} pack)`;
   const warn = document.getElementById('warn-msg');
   warn.classList.toggle('visible', packs.length === 1);
   if (warn.classList.contains('visible')) warn.style.color = t.textDim;
@@ -982,7 +983,7 @@ function updateUI() {
   else { sdot.style.background='#444'; sdot.style.boxShadow=''; }
 
   document.getElementById('phase-label').textContent =
-    { idle:'In attesa', running:'Elaborazione...', done:'Completato ✓', error:'Errore' }[phase] || '';
+    { idle:'In attesa', running:'Elaborazione in corso...', done:'Completato ✓', error:'Errore' }[phase] || '';
 }
 
 function setProgress(pct) {
@@ -1035,12 +1036,12 @@ async function runMerge() {
     const fn = mode==='java' ? mergeJava : mergeBedrock;
     const { blob } = await fn();
     setProgress(100);
-    addLog('─── Completato! '+fmtBytes(blob.size)+' ───', 'done');
+    addLog('─── Unione completata! '+fmtBytes(blob.size)+' ───', 'done');
     dlBlobUrl = URL.createObjectURL(blob);
     const base = packs.find(p => p.id===baseId);
     const safeName = (base?.name ?? 'merged').replace(/\.(zip|mcpack|mcaddon)$/i,'');
     const fname = mode==='java' ? `${safeName}_MERGED_pf84.zip` : `${safeName}_MERGED.mcpack`;
-    addLog('Pronto: "'+fname+'"', 'ok');
+    addLog('File pronto: "'+fname+'"', 'ok');
     phase = 'done'; updateUI();
     const dlCard = document.getElementById('dl-card');
     dlCard.classList.add('visible'); dlCard.style.background=t.bgCard; dlCard.style.borderColor=t.accent;
@@ -1050,17 +1051,17 @@ async function runMerge() {
     document.getElementById('dl-link').download = fname;
     document.getElementById('dl-btn').textContent = '⬇ SCARICA '+t.outputExt.toUpperCase();
     document.getElementById('dl-meta').innerHTML =
-      `<strong style="color:${t.text}">${escHtml(fname)}</strong><br/>${t.versionLabel}<br/><span style="opacity:.4">Blob URL locale · nessun dato inviato a server</span>`;
+      `<strong style="color:${t.text}">${escHtml(fname)}</strong><br/>${t.versionLabel}<br/><span style="opacity:.4">File locale · nessun dato inviato a server</span>`;
     dlCard.scrollIntoView({ behavior:'smooth', block:'nearest' });
   } catch(e) {
-    addLog('ERRORE: '+e.message, 'error'); phase = 'error'; updateUI();
+    addLog('Errore: '+e.message, 'error'); phase = 'error'; updateUI();
   }
 }
 
 // ─── Java Merge ───────────────────────────────────────────────────────────────
 async function mergeJava() {
   if (!window.JSZip) throw new Error('JSZip non disponibile');
-  addLog('JSZip pronto.', 'ok');
+  addLog('Libreria JSZip caricata.', 'ok');
   const mergedFiles = new Map();
   let baseMeta=null, basePng=null;
   const total = packs.length;
@@ -1070,17 +1071,17 @@ async function mergeJava() {
     const buf = await pack.file.arrayBuffer();
     let zip;
     try { zip = await JSZip.loadAsync(buf); }
-    catch(e) { addLog('  ✗ ZIP non valido: '+e.message, 'error'); continue; }
+    catch(e) { addLog('  ✗ Archivio non valido: '+e.message, 'error'); continue; }
     const entries = Object.keys(zip.files);
-    addLog('  → '+entries.length+' entry trovate.', 'dim');
+    addLog('  → '+entries.length+' elementi trovati.', 'dim');
     let added=0;
     for (const fname of entries) {
       const entry=zip.files[fname]; if (entry.dir) continue;
       const lo=fname.toLowerCase();
-      if (isBase&&lo==='pack.png') { basePng=await entry.async('uint8array'); addLog('  → pack.png Base catturata.','ok'); continue; }
+      if (isBase&&lo==='pack.png') { basePng=await entry.async('uint8array'); addLog('  → pack.png principale acquisita.','ok'); continue; }
       if (isBase&&lo==='pack.mcmeta') {
-        try { baseMeta=JSON.parse(await entry.async('string')); addLog('  → pack.mcmeta Base: "'+baseMeta?.pack?.description+'"','ok'); }
-        catch { addLog('  ✗ pack.mcmeta malformato, uso default.','warn'); } continue;
+        try { baseMeta=JSON.parse(await entry.async('string')); addLog('  → pack.mcmeta principale: "'+baseMeta?.pack?.description+'"','ok'); }
+        catch { addLog('  ✗ pack.mcmeta non valido, uso predefinito.','warn'); } continue;
       }
       if (lo==='pack.png'||lo==='pack.mcmeta') continue;
       if (!mergedFiles.has(fname)) { mergedFiles.set(fname, await entry.async('uint8array')); added++; }
@@ -1088,12 +1089,12 @@ async function mergeJava() {
     addLog('  → '+added+' nuovi file aggiunti.', 'dim');
     zip.files={}; setProgress(Math.round(((i+1)/total)*74)); await sleep(8);
   }
-  addLog('Pool: '+mergedFiles.size+' file unici. Composizione...','ok');
+  addLog('Totale: '+mergedFiles.size+' file unici. Composizione in corso...','ok');
   if (!baseMeta) baseMeta={pack:{pack_format:84,description:'Merged Resource Pack'}};
   const finalMeta={...baseMeta,pack:{...baseMeta.pack,pack_format:84}};
   addLog('  → pack_format aggiornato a 84 (Java 26w20a+).','ok');
   setProgress(80);
-  addLog('Generazione ZIP finale...','info');
+  addLog('Creazione archivio ZIP finale...','info');
   const outZip=new JSZip(); let n=0;
   for (const [path,data] of mergedFiles) {
     outZip.file(path,data);
@@ -1102,7 +1103,7 @@ async function mergeJava() {
   outZip.file('pack.mcmeta',JSON.stringify(finalMeta,null,2));
   if (basePng) outZip.file('pack.png',basePng); else addLog('  → Nessuna pack.png trovata.','warn');
   setProgress(93);
-  addLog('Compressione DEFLATE ('+(n+2)+' file)...','info');
+  addLog('Compressione ('+(n+2)+' file totali)...','info');
   const blob = await outZip.generateAsync(
     {type:'blob',compression:'DEFLATE',compressionOptions:{level:6}},
     m=>setProgress(93+Math.round(m.percent*0.06))
@@ -1113,7 +1114,7 @@ async function mergeJava() {
 // ─── Bedrock Merge ────────────────────────────────────────────────────────────
 async function mergeBedrock() {
   if (!window.JSZip) throw new Error('JSZip non disponibile');
-  addLog('JSZip pronto.', 'ok');
+  addLog('Libreria JSZip caricata.', 'ok');
   const mergedFiles=new Map();
   let baseManifest=null, baseIcon=null;
   // Track all module types found across all packs
@@ -1127,7 +1128,7 @@ async function mergeBedrock() {
     const buf=await pack.file.arrayBuffer();
     let zip;
     try { zip=await JSZip.loadAsync(buf); }
-    catch(e) { addLog('  ✗ ZIP non valido: '+e.message,'error'); continue; }
+    catch(e) { addLog('  ✗ Archivio non valido: '+e.message,'error'); continue; }
 
     // .mcaddon can contain nested .mcpack/.mcbehavior — flatten them
     const entries=Object.keys(zip.files);
@@ -1142,9 +1143,9 @@ async function mergeBedrock() {
         const nestedBuf = await zip.files[nestedName].async('arraybuffer');
         let nestedZip;
         try { nestedZip = await JSZip.loadAsync(nestedBuf); }
-        catch(e) { addLog('  ✗ Pack interno non valido: '+nestedName,'warn'); continue; }
+        catch(e) { addLog('  ✗ Pack interno non leggibile: '+nestedName,'warn'); continue; }
         const nestedEntries = Object.keys(nestedZip.files);
-        addLog(`    → "${nestedName}": ${nestedEntries.length} entry`, 'dim');
+        addLog(`    → "${nestedName}": ${nestedEntries.length} elementi`, 'dim');
         let na=0;
         for (const fname of nestedEntries) {
           const entry=nestedZip.files[fname]; if (entry.dir) continue;
@@ -1152,9 +1153,9 @@ async function mergeBedrock() {
           if (isBase&&(lo==='manifest.json'||lo==='pack_manifest.json')) {
             try {
               const m=JSON.parse(await entry.async('string'));
-              if (!baseManifest) { baseManifest=m; addLog('    → manifest.json Base: "'+m?.header?.name+'"','ok'); }
+              if (!baseManifest) { baseManifest=m; addLog('    → manifest.json principale: "'+m?.header?.name+'"','ok'); }
               if (m?.modules) m.modules.forEach(mod => { if(mod.type) allModuleTypes.add(mod.type); });
-            } catch { addLog('    ✗ manifest.json malformato.','warn'); } continue;
+            } catch { addLog('    ✗ manifest.json non valido.','warn'); } continue;
           }
           if (isBase&&lo==='pack_icon.png') { baseIcon=await entry.async('uint8array'); continue; }
           if (lo==='manifest.json'||lo==='pack_manifest.json'||lo==='pack_icon.png') {
@@ -1174,7 +1175,7 @@ async function mergeBedrock() {
     }
 
     // Normal .mcpack / .zip handling
-    addLog('  → '+entries.length+' entry trovate.','dim');
+    addLog('  → '+entries.length+' elementi trovati.','dim');
     let added=0;
     for (const fname of entries) {
       const entry=zip.files[fname]; if (entry.dir) continue;
@@ -1182,11 +1183,11 @@ async function mergeBedrock() {
       if (isBase&&(lo==='manifest.json'||lo==='pack_manifest.json')) {
         try {
           baseManifest=JSON.parse(await entry.async('string'));
-          addLog('  → manifest.json Base: "'+baseManifest?.header?.name+'"','ok');
+          addLog('  → manifest.json principale: "'+baseManifest?.header?.name+'"','ok');
           if (baseManifest?.modules) baseManifest.modules.forEach(m=>{if(m.type)allModuleTypes.add(m.type);});
-        } catch { addLog('  ✗ manifest.json malformato.','warn'); } continue;
+        } catch { addLog('  ✗ manifest.json non valido.','warn'); } continue;
       }
-      if (isBase&&lo==='pack_icon.png') { baseIcon=await entry.async('uint8array'); addLog('  → pack_icon.png Base catturata.','ok'); continue; }
+      if (isBase&&lo==='pack_icon.png') { baseIcon=await entry.async('uint8array'); addLog('  → pack_icon.png principale acquisita.','ok'); continue; }
       if (lo==='manifest.json'||lo==='pack_manifest.json'||lo==='pack_icon.png') {
         if (lo==='manifest.json'||lo==='pack_manifest.json') {
           try { const m=JSON.parse(await entry.async('string')); if(m?.modules) m.modules.forEach(mod=>{if(mod.type)allModuleTypes.add(mod.type);}); } catch{}
@@ -1199,13 +1200,13 @@ async function mergeBedrock() {
     zip.files={}; setProgress(Math.round(((i+1)/total)*74)); await sleep(8);
   }
 
-  addLog('Pool: '+mergedFiles.size+' file unici. Costruzione manifest...','ok');
+  addLog('Totale: '+mergedFiles.size+' file unici. Costruzione manifest...','ok');
 
   // Determine pack type from module types found
   const isAddonMerge = allModuleTypes.has('data_driven') || allModuleTypes.has('javascript') || allModuleTypes.has('script');
   const hasResources = allModuleTypes.has('resources') || allModuleTypes.size === 0;
   if (isAddonMerge) addLog('  → Tipo rilevato: ADDON (data_driven/script).','ok');
-  else addLog('  → Tipo rilevato: RESOURCE PACK (texture/risorse).','ok');
+  else addLog('  → Tipo rilevato: PACCHETTO RISORSE (texture/grafica).','ok');
 
   const hUUID=baseManifest?.header?.uuid??uuidv4();
   const desc=baseManifest?.header?.description??"Merged Pack";
@@ -1232,7 +1233,7 @@ async function mergeBedrock() {
   modules.forEach((m,i) => addLog(`  → Modulo ${i+1} [${m.type}] UUID: `+m.uuid.slice(0,18)+'...','ok'));
   addLog('  → min_engine_version [1,21,130] (Bedrock 26.20).','ok');
   setProgress(80);
-  addLog('Generazione .mcpack finale...','info');
+  addLog('Creazione archivio .mcpack finale...','info');
   const outZip=new JSZip(); let n=0;
   for (const [path,data] of mergedFiles) {
     outZip.file(path,data);
@@ -1241,7 +1242,7 @@ async function mergeBedrock() {
   outZip.file('manifest.json',JSON.stringify(finalManifest,null,2));
   if (baseIcon) outZip.file('pack_icon.png',baseIcon); else addLog('  → Nessuna pack_icon.png trovata.','warn');
   setProgress(93);
-  addLog('Compressione DEFLATE ('+(n+2)+' file)...','info');
+  addLog('Compressione ('+(n+2)+' file totali)...','info');
   const blob=await outZip.generateAsync(
     {type:'blob',compression:'DEFLATE',compressionOptions:{level:6}},
     m=>setProgress(93+Math.round(m.percent*0.06))
